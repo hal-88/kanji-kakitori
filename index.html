@@ -255,6 +255,10 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;tou
   let st = def;
   try { st = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
   st.sel = st.sel.filter(k => KANJI[k]);
+  // あとから足した漢字は、前に使ったことのある端末でも最初は「えらんだ」状態にする
+  const known = st.known || ['蚕','己','除','仁','泉','縦','頂','忠','誠','敵','至','宅','糖','紅','卵'];
+  Object.keys(KANJI).forEach(k => { if (!known.includes(k) && !st.sel.includes(k)) st.sel.push(k); });
+  st.known = Object.keys(KANJI);
   for (const id in st.wrong) if (!byId[id]) delete st.wrong[id];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
 
