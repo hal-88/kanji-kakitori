@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>漢字 書き取りれんしゅう</title>
+<meta name="description" content="問題を見てノートに書き、答えを見て○×で仕分け。まちがえた問題だけ復習できる漢字テスト練習。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232F6F5E'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E漢%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBF7EE; --card:#FFFFFF; --ink:#2A2724; --sub:#6E675D; --line:#E6DDCB;
+  --accent:#2F6F5E; --accent-soft:#E3EFEA;
+  --ok:#1F7A5A; --ok-soft:#E1F2EA; --ng:#C8443A; --ng-soft:#FBE7E4;
+  --mark:#FFE98A;
+  --kaku:"Klee One", "Hiragino Mincho ProN", serif;
+  --ui:"Zen Maru Gothic", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;touch-action:manipulation}
+[hidden]{display:none !important}
+.screen{min-height:100dvh;display:flex;flex-direction:column;padding:16px max(16px,env(safe-area-inset-right)) 16px max(16px,env(safe-area-inset-left))}
+
+/* ---------- ホーム ---------- */
+#home{max-width:1100px;margin:0 auto;gap:14px}
+.title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.title h1{font-family:var(--kaku);font-weight:600;font-size:30px;margin:0;letter-spacing:.04em}
+.title p{margin:0;color:var(--sub);font-size:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.panel h2{font-size:15px;margin:0 0 10px;color:var(--sub);font-weight:700}
+.panel h2 b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;margin-right:6px}
+.sets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.set{border:1px solid var(--line);border-radius:12px;padding:8px}
+.set-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px;color:var(--sub)}
+.set-head button{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.chip{font-family:var(--kaku);font-size:30px;font-weight:600;aspect-ratio:1;border-radius:10px;border:2px solid var(--line);background:#fff;color:#B5AC9C;display:grid;place-items:center;position:relative;line-height:1}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.chip .bad{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--ng);color:#fff;font-family:var(--ui);font-size:12px;font-weight:700;display:grid;place-items:center}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:120px;padding:12px 10px;border-radius:12px;border:2px solid var(--line);background:#fff;font-weight:700;font-size:16px;line-height:1.3}
+.seg button small{display:block;font-weight:500;font-size:13px;color:var(--sub)}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.seg button:disabled{opacity:.45;cursor:default}
+.seg.wrongmode button[data-mode="wrong"][aria-pressed="true"]{border-color:var(--ng);background:var(--ng-soft);color:var(--ng)}
+.start-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.start{flex:1;min-width:240px;padding:18px;border-radius:16px;background:var(--accent);color:#fff;font-size:22px;font-weight:700;box-shadow:0 4px 0 #1F4D41}
+.start:active{transform:translateY(3px);box-shadow:0 1px 0 #1F4D41}
+.start:disabled{background:#B9B2A5;box-shadow:0 4px 0 #9A9385}
+.sub-actions{display:flex;gap:8px;flex-wrap:wrap}
+.link{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--sub)}
+.how{font-size:14px;color:var(--sub);margin:0;line-height:1.7}
+.how b{color:var(--ink)}
+
+/* にがてリスト */
+.nigate{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.nigate span{font-family:var(--kaku);font-size:20px;padding:4px 10px;border-radius:10px;background:var(--ng-soft);border:1px solid #F1C7C1}
+.nigate span small{font-family:var(--ui);font-size:12px;color:var(--sub);margin-left:4px}
+
+/* ---------- 問題 ---------- */
+#quiz{height:100dvh;gap:12px}
+.qbar{display:flex;align-items:center;gap:12px}
+.qbar .count{font-weight:700;font-size:18px;white-space:nowrap}
+.progress{flex:1;height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .25s}
+.qbar .tag{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--ng-soft);color:var(--ng);font-weight:700}
+.qbar .quit{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--sub)}
+.board{flex:1;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:20px;display:flex;overflow:hidden;position:relative}
+.board.tate{flex-direction:row-reverse}
+.board.yoko{flex-direction:column}
+.qside{flex:1;min-width:0;min-height:0;display:grid;place-items:center;padding:24px}
+.sentence{font-family:var(--kaku);font-weight:600;font-size:clamp(30px,5.2vmin,48px);line-height:1.9;letter-spacing:.06em;margin:0}
+.tate .sentence{writing-mode:vertical-rl;max-height:100%}
+.blank{background:var(--mark);padding:.08em .12em;border-radius:4px}
+.yoko .blank{border-bottom:3px solid var(--ink)}
+.tate .blank{border-right:3px solid var(--ink)}
+.filled{color:var(--ng)}
+.filled rt{font-size:.42em;color:var(--sub);font-weight:400}
+.aside{flex:1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;padding:20px;background:repeating-linear-gradient(0deg,transparent 0 47px,#EFE8DA 47px 48px);border-color:var(--line);border-style:dashed}
+.tate .aside{border-width:0 2px 0 0}
+.yoko .aside{border-width:2px 0 0 0}
+.write-hint{text-align:center;color:var(--sub);font-size:18px;line-height:1.8}
+.write-hint .pen{font-size:46px;display:block}
+.answer{text-align:center}
+.answer .label{font-size:14px;color:var(--sub);margin-bottom:4px}
+.answer .big{font-family:var(--kaku);font-weight:400;font-size:clamp(64px,13vmin,120px);line-height:1.15;letter-spacing:.06em;color:var(--ink);word-break:keep-all}
+.answer .info{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:14px;color:var(--sub)}
+.answer .info span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.answer .info i{font-style:normal;white-space:nowrap;margin-left:.8em}
+.answer .info b{font-family:var(--kaku);font-size:18px;color:var(--ink);margin-right:4px}
+.actions{display:flex;gap:14px}
+.actions button{flex:1;padding:18px;border-radius:16px;font-size:22px;font-weight:700}
+.btn-show{background:var(--accent);color:#fff;box-shadow:0 4px 0 #1F4D41}
+.btn-ok{background:var(--ok);color:#fff;box-shadow:0 4px 0 #145640}
+.btn-ng{background:var(--ng);color:#fff;box-shadow:0 4px 0 #8F2C25}
+.actions button:active{transform:translateY(3px);box-shadow:none}
+.actions .mark{font-size:28px;margin-right:6px;vertical-align:-2px}
+.keys{font-size:12px;color:var(--sub);text-align:center;margin:-4px 0 0}
+.stamp{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-size:min(46vmin,360px);font-weight:700;opacity:0}
+.stamp.go{animation:stamp .45s ease-out}
+@keyframes stamp{0%{opacity:0;transform:scale(1.25)}30%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+
+/* ---------- 結果 ---------- */
+#result{max-width:980px;margin:0 auto;gap:14px}
+.score{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.score .big{font-family:var(--kaku);font-weight:600;font-size:56px;line-height:1}
+.score .big small{font-size:24px;color:var(--sub)}
+.score .pills{display:flex;gap:10px}
+.score .pills span{padding:8px 16px;border-radius:999px;font-weight:700;font-size:18px}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-ng{background:var(--ng-soft);color:var(--ng)}
+.msg{font-size:18px;margin:0}
+.wrong-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;overflow:auto}
+.witem{background:var(--card);border:1px solid #F1C7C1;border-left:6px solid var(--ng);border-radius:12px;padding:10px 14px}
+.witem .s{font-family:var(--kaku);font-size:18px;line-height:1.7}
+.witem .s b{background:var(--mark);font-weight:600;padding:0 .1em;border-radius:3px}
+.witem .a{font-family:var(--kaku);font-size:30px;font-weight:600}
+.res-actions{display:flex;gap:12px;flex-wrap:wrap}
+.res-actions button{flex:1;min-width:220px;padding:16px;border-radius:14px;font-size:19px;font-weight:700}
+.btn-redo{background:var(--ng);color:#fff}
+.btn-home{background:#fff;border:2px solid var(--line)}
+
+@media (max-width:820px){
+  .sets{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr}
+  .board.tate{flex-direction:column}
+  .board.tate .aside{border-width:2px 0 0 0}
+  .tate .sentence{max-height:46dvh}
+  .chip{font-size:28px}
+  .actions{gap:10px}
+  .actions button{min-width:0;padding:14px 8px;font-size:18px}
+  .actions .mark{font-size:22px}
+  .keys{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ホーム -->
+<section id="home" class="screen">
+  <div class="title">
+    <h1>漢字 書き取りれんしゅう</h1>
+    <p>問題を見て、ノートに書いてから答え合わせ</p>
+  </div>
+
+  <div class="panel">
+    <h2><b>1</b>どの漢字をれんしゅうする？（タップでえらぶ・はずす）</h2>
+    <div class="sets" id="sets"></div>
+  </div>
+
+  <div class="row">
+    <div class="panel">
+      <h2><b>2</b>どの問題？</h2>
+      <div class="seg" id="modeSeg">
+        <button data-mode="all">ぜんぶの問題<small id="nAll"></small></button>
+        <button data-mode="wrong">まちがえた問題だけ<small id="nWrong"></small></button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2><b>3</b>何問やる？</h2>
+      <div class="seg" id="countSeg">
+        <button data-count="10">10問</button>
+        <button data-count="20">20問</button>
+        <button data-count="0">ぜんぶ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="start-row">
+    <button class="start" id="startBtn">スタート</button>
+    <div class="sub-actions">
+      <button class="link" id="dirBtn"></button>
+    </div>
+  </div>
+
+  <div class="panel" id="nigatePanel">
+    <h2>まちがえた問題（○になったら消えます）</h2>
+    <div class="nigate" id="nigate"></div>
+    <p class="how" id="nigateEmpty">まだありません。答え合わせで「×」にした問題がここにたまります。</p>
+  </div>
+</section>
+
+<!-- 問題 -->
+<section id="quiz" class="screen" hidden>
+  <div class="qbar">
+    <span class="count" id="qCount"></span>
+    <div class="progress"><i id="qProg"></i></div>
+    <span class="tag" id="qTag" hidden>まちがえた問題</span>
+    <button class="quit" id="quitBtn">おわる</button>
+  </div>
+  <div class="board tate" id="board">
+    <div class="qside"><p class="sentence" id="sentence"></p></div>
+    <div class="aside">
+      <div class="write-hint" id="hint"><span class="pen">✏️</span>色のついたところを<br>ノートに漢字で書こう</div>
+      <div class="answer" id="answer" hidden>
+        <div class="label">こたえ</div>
+        <div class="big" id="ansBig"></div>
+        <div class="info" id="ansInfo"></div>
+      </div>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </div>
+  <div class="actions" id="actShow">
+    <button class="btn-show" id="showBtn">書けたら こたえを見る</button>
+  </div>
+  <div class="actions" id="actJudge" hidden>
+    <button class="btn-ok" id="okBtn"><span class="mark">○</span>あってた</button>
+    <button class="btn-ng" id="ngBtn"><span class="mark">×</span>まちがえた</button>
+  </div>
+  <p class="keys">キーボード：スペースで こたえ ／ 1で ○ ／ 2で ×</p>
+</section>
+
+<!-- 結果 -->
+<section id="result" class="screen" hidden>
+  <div class="score">
+    <div class="big" id="rScore"></div>
+    <div class="pills"><span class="p-ok" id="rOk"></span><span class="p-ng" id="rNg"></span></div>
+  </div>
+  <p class="msg" id="rMsg"></p>
+  <div class="wrong-list" id="rList"></div>
+  <div class="res-actions">
+    <button class="btn-redo" id="redoBtn">まちがえた問題を もう一回</button>
+    <button class="btn-home" id="homeBtn">はじめの画面へ</button>
+  </div>
+</section>
+
+<script src="data.js"></script>
+<script>
+(() => {
+  // ---------- データ ----------
+  const KANJI = {};
+  const QUESTIONS = [];
+  GROUPS.forEach(g => g.kanji.forEach(K => {
+    KANJI[K.k] = K;
+    K.q.forEach((x, i) => QUESTIONS.push({ id: K.k + '-' + (i + 1), k: K.k, s: x[0], a: x[1] }));
+  }));
+  const byId = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+
+  // ---------- 保存（この端末だけ） ----------
+  const KEY = 'kanji-kakitori-v1';
+  const def = { sel: Object.keys(KANJI), mode: 'all', count: 10, tate: true, wrong: {} };
+  let st = def;
+  try { st = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+  st.sel = st.sel.filter(k => KANJI[k]);
+  for (const id in st.wrong) if (!byId[id]) delete st.wrong[id];
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const show = name => ['home', 'quiz', 'result'].forEach(n => $(n).hidden = n !== name);
+
+  // ---------- ホーム ----------
+  const pool = () => QUESTIONS.filter(q => st.sel.includes(q.k));
+  const wrongPool = () => pool().filter(q => st.wrong[q.id]);
+
+  function renderHome() {
+    const sets = $('sets'); sets.textContent = '';
+    GROUPS.forEach(g => {
+      const box = el('div', 'set');
+      const head = el('div', 'set-head');
+      head.append(el('span', '', g.name));
+      const ks = g.kanji.map(K => K.k);
+      const allOn = ks.every(k => st.sel.includes(k));
+      const b = el('button', '', allOn ? 'はずす' : 'ぜんぶ');
+      b.onclick = () => {
+        st.sel = allOn ? st.sel.filter(k => !ks.includes(k)) : [...new Set([...st.sel, ...ks])];
+        save(); renderHome();
+      };
+      head.append(b);
+      const chips = el('div', 'chips');
+      g.kanji.forEach(K => {
+        const c = el('button', 'chip', K.k);
+        c.setAttribute('aria-pressed', st.sel.includes(K.k));
+        c.setAttribute('aria-label', K.k);
+        const nw = K.q.filter((_, i) => st.wrong[K.k + '-' + (i + 1)]).length;
+        if (nw) c.append(el('span', 'bad', nw));
+        c.onclick = () => {
+          st.sel = st.sel.includes(K.k) ? st.sel.filter(k => k !== K.k) : [...st.sel, K.k];
+          save(); renderHome();
+        };
+        chips.append(c);
+      });
+      box.append(head, chips);
+      sets.append(box);
+    });
+
+    const nAll = pool().length, nWrong = wrongPool().length;
+    if (st.mode === 'wrong' && nWrong === 0) st.mode = 'all';
+    $('nAll').textContent = nAll + '問';
+    $('nWrong').textContent = nWrong + '問';
+    $('modeSeg').classList.toggle('wrongmode', st.mode === 'wrong');
+    $('modeSeg').querySelectorAll('button').forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.mode === st.mode);
+      b.disabled = b.dataset.mode === 'wrong' && nWrong === 0;
+    });
+    $('countSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.count === st.count));
+    const n = st.mode === 'wrong' ? nWrong : nAll;
+    $('startBtn').disabled = n === 0;
+    $('startBtn').textContent = n === 0 ? '漢字をえらんでね' : `スタート（${st.count && st.count < n ? st.count : n}問）`;
+    $('dirBtn').textContent = st.tate ? '問題：たて書き ⇄' : '問題：横書き ⇄';
+
+    // まちがえた問題リスト（全体）
+    const ws = QUESTIONS.filter(q => st.wrong[q.id]);
+    const ng = $('nigate'); ng.textContent = '';
+    ws.forEach(q => { const s = el('span', '', q.a); s.append(el('small', '', yomi(q.s))); ng.append(s); });
+    $('nigateEmpty').hidden = ws.length > 0;
+  }
+
+  $('modeSeg').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; st.mode = b.dataset.mode; save(); renderHome(); };
+  $('countSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; st.count = +b.dataset.count; save(); renderHome(); };
+  $('dirBtn').onclick = () => { st.tate = !st.tate; save(); renderHome(); };
+
+  // ---------- 出題 ----------
+  let queue = [], idx = 0, results = [], revealed = false, isWrongMode = false;
+
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const parts = s => { const m = s.match(/^(.*?)\{(.+?)\}(.*)$/); return m ? [m[1], m[2], m[3]] : [s, '', '']; };
+  const yomi = s => parts(s)[1];
+
+  function start(list, wrongMode) {
+    queue = list; idx = 0; results = []; isWrongMode = wrongMode;
+    const board = $('board');
+    board.classList.toggle('tate', st.tate); board.classList.toggle('yoko', !st.tate);
+    $('qTag').hidden = !wrongMode;
+    show('quiz'); renderQ();
+  }
+
+  $('startBtn').onclick = () => {
+    const src = st.mode === 'wrong' ? wrongPool() : pool();
+    const list = shuffle(src.slice());
+    start(st.count ? list.slice(0, st.count) : list, st.mode === 'wrong');
+  };
+
+  function renderQ() {
+    const q = queue[idx];
+    revealed = false;
+    $('qCount').textContent = `${idx + 1} / ${queue.length}`;
+    $('qProg').style.width = (idx / queue.length * 100) + '%';
+    const [pre, yo, post] = parts(q.s);
+    const p = $('sentence'); p.textContent = '';
+    p.append(pre, el('span', 'blank', yo), post);
+    $('hint').hidden = false; $('answer').hidden = true;
+    $('actShow').hidden = false; $('actJudge').hidden = true;
+  }
+
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    const q = queue[idx];
+    const [pre, yo, post] = parts(q.s);
+    const p = $('sentence'); p.textContent = '';
+    const r = el('ruby', 'filled'); r.append(q.a, el('rt', '', yo));
+    p.append(pre, r, post);
+    $('ansBig').textContent = q.a;
+    const info = $('ansInfo'); info.textContent = '';
+    const K = KANJI[q.k];
+    const s = el('span'); s.append(el('b', '', K.k));
+    const bits = [];
+    if (K.on) bits.push('音 ' + K.on);
+    if (K.kun) bits.push('訓 ' + K.kun);
+    bits.push(K.kaku + '画');
+    bits.forEach(t => s.append(el('i', '', t)));
+    info.append(s);
+    $('hint').hidden = true; $('answer').hidden = false;
+    $('actShow').hidden = true; $('actJudge').hidden = false;
+  }
+
+  function judge(ok) {
+    if (!revealed) return;
+    revealed = false;
+    const q = queue[idx];
+    results.push({ q, ok });
+    if (ok) delete st.wrong[q.id]; else st.wrong[q.id] = Date.now();
+    save();
+    const stamp = $('stamp');
+    stamp.textContent = ok ? '○' : '×';
+    stamp.style.color = ok ? 'var(--ok)' : 'var(--ng)';
+    stamp.classList.remove('go'); void stamp.offsetWidth; stamp.classList.add('go');
+    setTimeout(() => { idx++; idx < queue.length ? renderQ() : finish(); }, 380);
+  }
+
+  $('showBtn').onclick = reveal;
+  $('okBtn').onclick = () => judge(true);
+  $('ngBtn').onclick = () => judge(false);
+  $('quitBtn').onclick = () => { results.length ? finish() : (renderHome(), show('home')); };
+
+  document.addEventListener('keydown', e => {
+    if ($('quiz').hidden) return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); reveal(); }
+    else if (e.key === '1' || e.key === 'o') judge(true);
+    else if (e.key === '2' || e.key === 'x') judge(false);
+  });
+
+  // ---------- 結果 ----------
+  let lastWrong = [];
+  function finish() {
+    const ok = results.filter(r => r.ok).length, n = results.length;
+    lastWrong = results.filter(r => !r.ok).map(r => r.q);
+    $('rScore').innerHTML = '';
+    $('rScore').append(String(ok), el('small', '', ` / ${n}問`));
+    $('rOk').textContent = '○ ' + ok;
+    $('rNg').textContent = '× ' + lastWrong.length;
+    const rate = n ? ok / n : 0;
+    $('rMsg').textContent =
+      lastWrong.length === 0 ? (isWrongMode ? 'ぜんぶ書けた！ にがてを のりこえたね。' : 'ぜんぶ○！ すばらしい！')
+      : rate >= 0.8 ? 'あと少し！ まちがえた漢字をもう一回書いてみよう。'
+      : 'まちがえた問題は、答えを見ながら3回書いてから もう一回やってみよう。';
+    const list = $('rList'); list.textContent = '';
+    lastWrong.forEach(q => {
+      const it = el('div', 'witem');
+      const [pre, yo, post] = parts(q.s);
+      const s = el('div', 's'); s.append(pre, el('b', '', yo), post);
+      it.append(s, el('div', 'a', q.a));
+      list.append(it);
+    });
+    $('redoBtn').hidden = lastWrong.length === 0;
+    show('result');
+  }
+  $('redoBtn').onclick = () => start(shuffle(lastWrong.slice()), true);
+  $('homeBtn').onclick = () => { renderHome(); show('home'); };
+
+  renderHome();
+})();
+</script>
+</body>
+</html>
